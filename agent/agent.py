@@ -1,9 +1,11 @@
 from services.order_service import OrderService
+from ai.gemini_ai import GeminiAI
 class Agent:
     def __init__(self):
         self.convo_list = []
         self.orderservice = OrderService()
         self.waiting_for = None
+        self.ai = GeminiAI()
     def receive_message(self,message):
         self.convo_list.append(message)
     def get_last_msg(self):
@@ -12,18 +14,9 @@ class Agent:
         else:
             return "Convo list is empty."  
     def check_intent(self):
-        last_msg = self.get_last_msg().lower().split()
-        if last_msg != "Convo list is empty.":
-            for word in last_msg:
-                if word == "hi" or word == "hello":
-                    return "Greetings"
-                elif word == "order" or word == "payment":
-                    return "Order"
-                elif word == "refund" or word == "return":
-                    return "Return"
-            return "Nothing Understandable"
-        else:
-            return last_msg
+        message = self.get_last_msg()
+        result = self.ai.understand(message)
+        return result
     def missing_value(self):
         intent = self.check_intent()
         if intent == "Order":
@@ -31,15 +24,21 @@ class Agent:
             return "Please provide your missing number"  
     def decide_action(self):
         if self.waiting_for == "order_number":
-            order_number = self.get_last_msg()
+            last_msg = self.get_last_msg()
+            order_number = self.ai.extract_order_number(last_msg)
             self.waiting_for = None
             return self.orderservice.get_status(order_number)
-        intent = self.check_intent()
+        result = self.check_intent()
+        intent = result["intent"]
         if intent == "Greetings":
             return "Handle Greeting"
         elif intent == "Order":
-            return self.missing_value()
+            order_number = result["order_number"]
+            if order_number is None:
+                self.waiting_for = "order_number"
+                return "Please provide your order number"
+            return self.orderservice.get_status(order_number)
         elif intent == "Return":
             return "Handle return"
         else:
-            return "No decision"   
+            return "No decision"
