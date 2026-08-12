@@ -20,4 +20,4 @@ def chat(request : ChatRequest):
     agent = conversation_manager.get_agent(request.user_id)
     agent.receive_message(request.message)
     response = agent.decide_action()
-    print(response)
+    return response

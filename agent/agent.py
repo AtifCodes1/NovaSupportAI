@@ -16,24 +16,21 @@ class Agent:
     def check_intent(self):
         message = self.get_last_msg()
         result = self.ai.understand(message)
-        return result
-    def missing_value(self):
-        intent = self.check_intent()
-        if intent == "Order":
-            self.waiting_for = "order_number" 
-            return "Please provide your missing number"  
+        return result 
     def decide_action(self):
         if self.waiting_for == "order_number":
             last_msg = self.get_last_msg()
-            order_number = self.ai.extract_order_number(last_msg)
+            result = self.ai.extract_order_number(last_msg)
+            if result.order_number is None:
+                return "I couldn't find an order number. Please provide it."
             self.waiting_for = None
-            return self.orderservice.get_status(order_number)
+            return self.orderservice.get_status(result.order_number)
         result = self.check_intent()
-        intent = result["intent"]
+        intent = result.intent
         if intent == "Greetings":
             return "Handle Greeting"
         elif intent == "Order":
-            order_number = result["order_number"]
+            order_number = result.order_number
             if order_number is None:
                 self.waiting_for = "order_number"
                 return "Please provide your order number"
