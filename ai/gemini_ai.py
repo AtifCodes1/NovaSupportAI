@@ -26,7 +26,6 @@ class GeminiAI(BaseAI):
         answer = response.text.strip()
         data = json.loads(answer)
         result = AIResponse(**data)
-        print(result)
         return result
     def extract_order_number(self,message):
         prompt = f'''Analyze this customer message.
@@ -34,6 +33,7 @@ class GeminiAI(BaseAI):
                     Extract order_number from message,
                     The json must contain this key "order_number"
                     if there is no order_number set it to null,
+                    if you just see numeric numbers set it to "order_number"
                     Don't give extra text or information 
                     give the json with just order_number
                     Just return it in json.'''

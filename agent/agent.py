@@ -1,9 +1,11 @@
 from services.order_service import OrderService
+from services.return_service import ReturnService
 from ai.gemini_ai import GeminiAI
 class Agent:
     def __init__(self):
         self.convo_list = []
         self.orderservice = OrderService()
+        self.returnservice = ReturnService()
         self.waiting_for = None
         self.ai = GeminiAI()
     def receive_message(self,message):
@@ -19,12 +21,20 @@ class Agent:
         return result 
     def decide_action(self):
         if self.waiting_for == "order_number":
+            print(self.waiting_for)
             last_msg = self.get_last_msg()
             result = self.ai.extract_order_number(last_msg)
             if result.order_number is None:
                 return "I couldn't find an order number. Please provide it."
             self.waiting_for = None
             return self.orderservice.get_status(result.order_number)
+        elif self.waiting_for == "return_order_number":
+            last_msg = self.get_last_msg()
+            result = self.ai.extract_order_number(last_msg)
+            if result.order_number is None:
+                return "I couldn't find an order number. Please provide it."
+            self.waiting_for = None
+            return self.returnservice.process_return(result.order_number)
         result = self.check_intent()
         intent = result.intent
         if intent == "Greetings":
@@ -36,6 +46,10 @@ class Agent:
                 return "Please provide your order number"
             return self.orderservice.get_status(order_number)
         elif intent == "Return":
-            return "Handle return"
+            order_number = result.order_number
+            if order_number is None:
+                self.waiting_for = "return_order_number"
+                return "Please provide your order number"
+            return self.returnservice.process_return(order_number)
         else:
             return "No decision"
