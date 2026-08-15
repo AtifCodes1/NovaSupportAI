@@ -31,10 +31,21 @@ class Agent:
         order = self.orderservice.get_status(ordernumber)
         if order is None:
             return f"No order on {ordernumber}"
-        return (
+        else:
+            return (
                 f"order {ordernumber} is {order['status']}."
                 f"Current location is {order['location']}."
                 f"Estimates deliver with in {order['estimated_delivery']}.")
+    def _handle_return(self,ordernumber):
+        return_order = self.returnservice.process_return(ordernumber)
+        if return_order is None:
+            return (f"no order found for return {ordernumber}")
+        if not return_order["return_eligible"]:
+            return (f"order {ordernumber} is not eligible for return")
+        else:
+            return (
+                f"order {ordernumber} is eligible for return."
+                f"Return status is {return_order['return_status']}")
     def _handle_waiting(self):
         ordernumber = self._get_order_number()
         if ordernumber is None:
@@ -42,7 +53,7 @@ class Agent:
         if self.current_intent == "Order":
             response= self._handle_order(ordernumber)
         elif self.current_intent == "Return":
-            response= self.returnservice.process_return(ordernumber)
+            response= self._handle_return(ordernumber)
         else:
             return "Something went wrong"
         self.waiting_for = None
@@ -68,6 +79,6 @@ class Agent:
                 self.current_intent = "Return"
                 self.waiting_for = "return_order_number"
                 return "Please provide your order number"
-            return self.returnservice.process_return(order_number)
+            return self._handle_return(order_number)
         else:
             return "No decision"
