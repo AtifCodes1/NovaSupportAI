@@ -27,12 +27,20 @@ class Agent:
         message = self.get_last_msg()
         result = self.ai.understand(message)
         return result 
+    def _handle_order(self,ordernumber):
+        order = self.orderservice.get_status(ordernumber)
+        if order is None:
+            return f"No order on {ordernumber}"
+        return (
+                f"order {ordernumber} is {order['status']}."
+                f"Current location is {order['location']}."
+                f"Estimates deliver with in {order['estimated_delivery']}.")
     def _handle_waiting(self):
         ordernumber = self._get_order_number()
         if ordernumber is None:
             return "I couldn't find an order number. Please provide it."
         if self.current_intent == "Order":
-            response= self.orderservice.get_status(ordernumber)
+            response= self._handle_order(ordernumber)
         elif self.current_intent == "Return":
             response= self.returnservice.process_return(ordernumber)
         else:
@@ -53,7 +61,7 @@ class Agent:
                 self.current_intent = "Order"
                 self.waiting_for = "order_number"
                 return "Please provide your order number"
-            return self.orderservice.get_status(order_number)
+            return self._handle_order(order_number)
         elif intent == "Return":
             order_number = result.order_number
             if order_number is None:
