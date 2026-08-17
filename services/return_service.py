@@ -1,7 +1,10 @@
 from api.client import APIClient
+from config.config import Config
 class ReturnService:
     def __init__(self):
-        self.api_client = APIClient("http://127.0.0.1:8001")
+        self.config = Config()
+        url = self.config.get_backend_url()
+        self.api_client = APIClient(url)
     def process_return(self,ordernumber):
         response = self.api_client.get(f"/returns/{ordernumber}")
         if response.status_code == 200:

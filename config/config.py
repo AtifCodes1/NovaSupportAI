@@ -14,3 +14,5 @@ class Config:
     def get_gemini_api_key(self):
             api_key = os.getenv("GEMINI_API_KEY")
             return api_key       
+    def get_backend_url(self):
+         return self.data["backend"]["url"]

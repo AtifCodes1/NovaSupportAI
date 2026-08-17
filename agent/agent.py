@@ -82,11 +82,10 @@ class Agent:
             return self._handle_order(order_number)
         elif intent == "Return":
             order_number = result.order_number
-            action = result.action
+            self.current_action = result.action
             if order_number is None:
                 self.current_intent = "Return"
                 self.waiting_for = "return_order_number"
-                self.current_action = action
                 return "Please provide your order number"
             return self._handle_return(order_number)
         else:
