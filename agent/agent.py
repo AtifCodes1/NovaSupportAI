@@ -8,6 +8,7 @@ class Agent:
         self.returnservice = ReturnService()
         self.current_intent = None
         self.waiting_for = None
+        self.current_action =None
         self.ai = GeminiAI()
     def _get_order_number(self):
         last_msg = self.get_last_msg()
@@ -32,20 +33,25 @@ class Agent:
         if order is None:
             return f"No order on {ordernumber}"
         else:
-            return (
-                f"order {ordernumber} is {order['status']}."
-                f"Current location is {order['location']}."
-                f"Estimates deliver with in {order['estimated_delivery']}.")
+            return order
     def _handle_return(self,ordernumber):
-        return_order = self.returnservice.process_return(ordernumber)
-        if return_order is None:
-            return (f"no order found for return {ordernumber}")
-        if not return_order["return_eligible"]:
-            return (f"order {ordernumber} is not eligible for return")
+        if self.current_action=="Check":
+            return_order = self.returnservice.process_return(ordernumber)
+            if return_order is None:
+                return (f"no order found for return {ordernumber}")
+            elif not return_order["return_eligible"]:
+                return (f"order {ordernumber} is not eligible for return")
+            else:
+                return return_order
+        elif self.current_action=="Request":    
+            return_order = self.returnservice.request_return(ordernumber)
+            if return_order is None:
+                return (f"no order found for return {ordernumber}")
+            else:
+                return return_order
         else:
-            return (
-                f"order {ordernumber} is eligible for return."
-                f"Return status is {return_order['return_status']}")
+            return "I couldn't understand what you want to do with the return."    
+        
     def _handle_waiting(self):
         ordernumber = self._get_order_number()
         if ordernumber is None:
@@ -58,6 +64,7 @@ class Agent:
             return "Something went wrong"
         self.waiting_for = None
         self.current_intent = None
+        self.current_action = None
         return response
     def decide_action(self):
         if self.waiting_for is not None:
@@ -75,9 +82,11 @@ class Agent:
             return self._handle_order(order_number)
         elif intent == "Return":
             order_number = result.order_number
+            action = result.action
             if order_number is None:
                 self.current_intent = "Return"
                 self.waiting_for = "return_order_number"
+                self.current_action = action
                 return "Please provide your order number"
             return self._handle_return(order_number)
         else:

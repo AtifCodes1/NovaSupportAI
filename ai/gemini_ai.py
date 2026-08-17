@@ -10,17 +10,27 @@ class GeminiAI(BaseAI):
         self.client = genai.Client(api_key=api_key)
     def understand(self,message):
         prompt = f'''Analyze this customer message.
-                    message = {message}
-                    Identify:
-                    1. intent
-                    2. order number
-                    Don't provide extra information or text.
-                    The intent must be exactly one of:
-                    "Greetings"
-                    "Order"
-                    "Return"
-                    "Unknown"
-                    Return only JSON.'''
+        message = {message}
+        Identify:
+            1. intent
+            2. action
+            3. order number
+        The intent must be exactly one of:
+            "Greetings"
+            "Order"
+            "Return"
+            "Unknown"
+        If the intent is "Return", the action must be exactly one of:
+            "Check"
+            "Request"
+        Use "Check" when the customer is asking about return eligibility,
+            return status, or whether they can return the order.
+        Use "Request" when the customer wants to actually submit/create
+            a return request.
+        If the intent is not "Return", set action to null.
+        If there is no order number, set order_number to null.
+        Don't provide extra information or text.
+        Return only JSON.'''
         response = self.client.models.generate_content(
                     model="gemini-3.5-flash-lite",contents=prompt)
         answer = response.text.strip()

@@ -7,3 +7,9 @@ class ReturnService:
         if response.status_code == 200:
             return response.json()
         return None
+    def request_return(self,ordernumber):
+        data = {"order_number":ordernumber}
+        response = self.api_client.post("/returns",data)
+        if response.status_code==200:
+            return response.json()
+        return None
